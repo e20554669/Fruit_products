@@ -1,0 +1,75 @@
+{
+    // VS Code 側邊欄顯示的名稱
+    "name": "Demo Python Project with Poetry", 
+
+    "build": {
+        "dockerfile": "Dockerfile" 
+    },
+    
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.black-formatter", // Python 格式化
+                "ms-python.isort",          // Python 排序 import
+                "streetsidesoftware.code-spell-checker",
+                "donjayamanne.githistory",
+                "eamodio.gitlens",
+                "mhutchie.git-graph",
+                "shardulm94.trailing-spaces",
+                "vivaxy.vscode-conventional-commits",
+                "bierner.markdown-mermaid",
+                // 建議加入一個 .toml 檔案支援
+                "bungcip.better-toml" 
+            ],
+            
+            "settings": {
+                // 終端機設定為 Zsh (與 Dockerfile 中安裝 Zsh 配合)
+                "terminal.integrated.defaultProfile.linux": "zsh",
+                
+                // 程式碼風格設定
+                "editor.defaultFormatter": "ms-python.black-formatter",
+                "editor.tabSize": 4,
+                "editor.rulers": [100],
+                
+                // *** Poetry 整合與 Python 解釋器設定 (關鍵部分) ***
+                // 基礎解釋器路徑
+                "python.defaultInterpreterPath": "/usr/local/bin/python", 
+                "python.languageServer": "Pylance",
+                "python.testing.pytestEnabled": true, // 啟用 Pytest 測試
+                
+                // 告訴 Pylance 尋找 Poetry 建立的虛擬環境 (假設 virtualenvs.in-project true)
+                // 請確認 python3.12 版本是否與您的 Dockerfile 一致
+                "python.analysis.extraPaths": [
+                    "/workspaces/demo-devcontainer/.venv/lib/python3.12/site-packages"
+                ]
+            }
+        }
+    },
+    
+    // 將 SSH 和 Git config 掛載到容器，方便進行身份驗證的 Git 操作
+    "mounts": [
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh_mounted,type=bind,consistency=cached",
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig,target=/root/.gitconfig_mounted,type=bind,consistency=cached"
+    ],
+    
+    // 設定 PYTHONPATH 環境變數
+    "remoteEnv": {
+        "PYTHONPATH": "/workspaces/demo-devcontainer/src"
+    },
+
+    // 容器創建後執行的指令，用於安裝 Poetry 依賴等。
+    // 請確保您的 ./.devcontainer/postCreateCommand.sh 檔案存在並包含 'poetry install'。
+    "postCreateCommand": "sh ./.devcontainer/postCreateCommand.sh", 
+
+    // Docker 運行參數 (保持您原有的設定)
+    "runArgs": [
+        "--name",
+        "demo-devcontainer",
+        "--network",
+        "host"
+    ],
+    
+    // (可選) 設置容器內使用者，如果您想從 root 切換到非 root
+    "remoteUser": "root" 
+}
