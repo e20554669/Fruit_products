@@ -3,7 +3,8 @@
     "name": "Demo Python Project with Poetry", 
 
     "build": {
-        "dockerfile": "Dockerfile" 
+        "dockerfile": "Dockerfile",
+	"context": ".."
     },
     
     "customizations": {

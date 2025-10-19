@@ -5,6 +5,9 @@ set -e
 
 echo "--- 執行 Dev Container 建立後腳本 (postCreateCommand) ---"
 
+export POETRY_HOME="/opt/poetry"
+export PATH="$POETRY_HOME/bin:$PATH"
+
 # --- 1. 配置 Poetry 虛擬環境路徑 ---
 # 設置 Poetry 將虛擬環境建立在專案目錄內（.venv/），而非全域緩存中。
 # 這使 Dev Container 啟動時虛擬環境更易於定位和管理。
