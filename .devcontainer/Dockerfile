@@ -1,8 +1,6 @@
 FROM python:3.12-slim-bullseye
 
 ENV TZ=Asia/Taipei
-ENV POETRY_HOME="/opt/poetry"
-ENV PATH="$POETRY_HOME/bin:$PATH"
 
 # --- 1. 安裝與配置 (單一高效 RUN 層) ---
 RUN apt-get update && \
@@ -28,9 +26,7 @@ RUN apt-get update && \
     # 安裝 Oh My Zsh
     echo "Y" | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
     \
-    # 🌟 關鍵修正：將 Poetry PATH 寫入 Zsh 設定檔 (.zshrc) 🌟
-    echo 'export POETRY_HOME="/opt/poetry"' >> /root/.zshrc && \
-    echo 'export PATH="$POETRY_HOME/bin:$PATH"' >> /root/.zshrc && \
+    echo 'export PATH="$PATH:/root/.local/bin"' >> /root/.zshrc && \
     \
     # 清理以縮小映像檔大小
     apt-get clean && \

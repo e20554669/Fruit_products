@@ -5,12 +5,12 @@ set -e
 
 echo "--- 執行 Dev Container 建立後腳本 (postCreateCommand) ---"
 
-# 🌟 關鍵修正：確保 /root/.local/bin/poetry 的執行權限 🌟
-# (如果檔案沒有執行權限，即使路徑正確也會 Exit 127)
-chmod +x /root/.local/bin/poetry 
-
 # Poetry 的絕對路徑 (繞過 $PATH 載入問題)
-POETRY_BIN="/root/.local/bin/poetry"
+POETRY_BIN="/root/.local/bin/poetry" 
+
+# 🌟 關鍵：給予執行權限並確認 Poetry 可用 🌟
+# 由於 Dockerfile 已經安裝了 Poetry，我們檢查並確保它是可執行的。
+chmod +x "$POETRY_BIN" || true
 
 # --- 1. 配置 Poetry 虛擬環境路徑 (使用絕對路徑) ---
 echo "1. 配置 Poetry: 確保虛擬環境建立在專案目錄 (.venv) 內..."
