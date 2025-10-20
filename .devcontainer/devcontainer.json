@@ -65,7 +65,7 @@
     // Docker 運行參數
     "runArgs": [
         "--name",
-        "demo-devcontainer",
+        "teamproject",
         "--network",
         "host"
     ],
