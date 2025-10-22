@@ -38,18 +38,18 @@
                 "python.testing.pytestEnabled": true,
                 
                 // 告訴 Pylance 尋找 Poetry 建立的虛擬環境
-                "python.analysis.extraPaths": [
-                    "/workspaces/demo-devcontainer/.venv/lib/python3.12/site-packages"
-                ]
+		"python.analysis.extraPaths": [
+		"${workspaceFolder}/.venv/lib/python3.12/site-packages"
+		]
             }
         }
     },
     
     // 將 SSH 和 Git config 掛載到容器
-    "mounts": [
-        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh_mounted,type=bind,consistency=cached",
-        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig,target=/root/.gitconfig_mounted,type=bind,consistency=cached"
-    ],
+    //"mounts": [
+    //    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh_mounted,type=bind,consistency=cached",
+    //    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig,target=/root/.gitconfig_mounted,type=bind,consistency=cached"
+    //],
     
     // 設定 PYTHONPATH 環境變數
     "remoteEnv": {
@@ -65,7 +65,7 @@
     // Docker 運行參數
     "runArgs": [
         "--name",
-        "demo-devcontainer",
+        "teamproject",
         "--network",
         "host"
     ],
