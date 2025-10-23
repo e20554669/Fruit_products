@@ -13,15 +13,14 @@
             "extensions": [
                 "ms-python.python",
                 "ms-python.black-formatter", 
-                "ms-python.isort",          
+                "ms-python.isort",
                 "streetsidesoftware.code-spell-checker",
-                "donjayamanne.githistory",
                 "eamodio.gitlens",
-                "mhutchie.git-graph",
                 "shardulm94.trailing-spaces",
                 "vivaxy.vscode-conventional-commits",
                 "bierner.markdown-mermaid",
-                "bungcip.better-toml" 
+                "bungcip.better-toml",
+                "mechatroner.rainbow-csv",
             ],
             
             "settings": {
