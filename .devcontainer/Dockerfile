@@ -20,7 +20,7 @@ RUN apt-get update && \
     if [ -f /usr/local/bin/pip3 ]; then \
         mv /usr/local/bin/pip3 /usr/local/bin/pip3_disabled_by_docker ; \
     fi && \
-    echo '#!/bin/bash\necho "錯誤：請使用 Poetry 管理依賴，而不是 pip！" > /usr/local/bin/pip && exit 1' > /usr/local/bin/pip && \
+    echo '#!/bin/bash\necho "錯誤：請使用 Poetry 管理依賴，而不是 pip！" >&2; exit 1' > /usr/local/bin/pip && \
     chmod +x /usr/local/bin/pip && \
     \
     # 安裝 Oh My Zsh

@@ -1,0 +1,47 @@
+# .devcontainer/docker-compose.yml
+
+version: '3.8'
+
+services:
+  # 您的開發容器 (使用您穩定的 Dockerfile)
+  app:
+    build:
+      context: ..  # 從專案根目錄開始尋找
+      dockerfile: .devcontainer/Dockerfile
+
+    container_name: teamproject
+
+    volumes:
+      # 將專案目錄掛載到容器的 /app
+      - ..:/app:cached
+    
+    # 設置環境變數，讓 Python 腳本知道 Remote WebDriver 的位置
+    environment:
+      - SELENIUM_HOST=selenium-chrome
+      - SELENIUM_PORT=4444
+
+    # Dev Container 相關配置，確保 VS Code 連線
+    user: root
+
+    command: sleep infinity
+    
+    # 確保 Chrome 服務在應用程式啟動前準備好
+    depends_on:
+      - selenium-chrome 
+
+  # Selenium 瀏覽器服務 (包含 Chrome 和 ChromeDriver)
+  selenium-chrome:
+    image: selenium/standalone-chrome:latest
+    container_name: selenium-chrome
+    user: root
+    # 開啟遠端偵錯
+    ports:
+      - "7900:7900"
+
+    volumes:
+      # 將共享磁碟區掛載到 Chrome 容器的預設下載目錄
+        - ../work_area/data/downloads:/home/seluser/Downloads
+
+
+    # 必填：給予足夠的共享記憶體，否則 Chrome 會在容器內崩潰
+    shm_size: '2g'
