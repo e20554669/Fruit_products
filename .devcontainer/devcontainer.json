@@ -2,11 +2,12 @@
     // VS Code 側邊欄顯示的名稱
     "name": "Demo Python Project with Poetry", 
 
-    "build": {
-        "dockerfile": "Dockerfile",
-        "context": ".." // 告訴 Docker 從專案根目錄開始尋找 pyproject.toml
-    },
-    
+    "dockerComposeFile": [
+        "docker-compose.yml"
+    ],
+    "service": "app",
+    "workspaceFolder": "/app", 
+
     "customizations": {
         "vscode": {
             "extensions": [
@@ -50,11 +51,7 @@
     //    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh_mounted,type=bind,consistency=cached",
     //    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig,target=/root/.gitconfig_mounted,type=bind,consistency=cached"
     //],
-    
-    // 設定 PYTHONPATH 環境變數
-    "remoteEnv": {
-        "PYTHONPATH": "/workspaces/demo-devcontainer/src"
-    },
+
 
     // 容器創建後執行的指令 (使用 Array 語法，確保 Shell 執行穩定)
     "postCreateCommand": [
@@ -62,13 +59,6 @@
         "./.devcontainer/postCreateCommand.sh"
     ],
     
-    // Docker 運行參數
-    "runArgs": [
-        "--name",
-        "teamproject",
-        "--network",
-        "host"
-    ],
     
     "remoteUser": "root" 
 }
