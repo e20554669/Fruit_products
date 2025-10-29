@@ -1,198 +1,119 @@
+import pandas as pd
 import requests
-import time
-import datetime as dt
-from dateutil.relativedelta import relativedelta
-import csv
-import urllib3
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from threading import Lock
+from datetime import datetime, timedelta
 
-# -----------------------------
-# 設定
-# -----------------------------
-FARM_TRANS_URL = "https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx"
-OUTPUT_CSV     = "moa_fruit_N05_20200101_20251231.csv"
+# === 1️ API 網址 ===
+url = "https://data.moa.gov.tw/Service/OpenData/FromM/FarmTransData.aspx"
 
-USE_ROC = True        # 查詢時使用民國年格式
-MAX_WORKERS = 10      # 多執行緒數量
-SEGMENT_DAYS = 10     # 每段區間天數
-RETRY_DELAY_BASE = 1  # 失敗重試延遲基礎秒數
+# === 2️ 中英欄位對照表 ===
+column_map = {
+    "交易日期": "TransDate",
+    "市場代號": "MarketCode",
+    "市場名稱": "MarketName",
+    "作物代號": "CropCode",
+    "作物名稱": "CropName",
+    "上價": "UpperPrice",
+    "中價": "MiddlePrice",
+    "下價": "LowerPrice",
+    "平均價": "AveragePrice",
+    "交易量": "TransVolume",
+    "種類代碼": "TypeCode"
+}
 
-# ✅ 設定時間範圍：2020/1/1 ~ 2025/12/31
-start_date = dt.date(2020, 1, 1)
-end_date   = dt.date(2025, 12, 31)
+# === 3️ 作物代號對應 FinalName ===
+code_to_name = {
+    "72": "番茄", "I1": "木瓜", "51": "百香果", "T1": "西瓜", "N3": "李",
+    "R1": "芒果", "L1": "枇杷", "H1": "文旦柚", "H2": "白柚", "Z4": "柿",
+    "W1": "洋香瓜", "A1": "香蕉", "Y1": "桃", "45": "草莓", "J1": "荔枝",
+    "D1": "楊桃", "41": "梅", "O10": "梨", "V1": "香瓜", "E1": "柳橙",
+    "22": "蓮霧", "C1": "椪柑", "P1": "番石榴", "11": "可可椰子", "M3": "楊桃",
+    "C5": "溫州蜜柑", "S1": "葡萄", "H4": "葡萄柚", "B2": "鳳梨",
+    "Q1": "蓮霧", "G7": "龍眼", "K3": "棗", "F1": "蘋果",
+    "X69": "釋迦", "31": "番茄枝"
+}
 
-# -----------------------------
-# SSL 完整繞過設定
-# -----------------------------
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-session = requests.Session()
-session.verify = False
+# === 4️ 抓取資料函式 ===
+def fetch_data(start, end, page_top=2000):
+    """抓取 N05 水果資料（只保留指定作物代號）"""
+    all_data = []
+    valid_codes = set(code_to_name.keys())
 
-# -----------------------------
-# 民國 ↔ 西元日期處理
-# -----------------------------
-def to_roc(date_obj: dt.date, use_roc=True) -> str:
-    if use_roc:
-        year = date_obj.year - 1911
-    else:
-        year = date_obj.year
-    return f"{year:03d}.{date_obj.month:02d}.{date_obj.day:02d}"
-
-def roc_to_western(date_str: str) -> str:
-    """將民國日期轉成西元日期格式 (YYY.MM.DD → YYYY.MM.DD)"""
-    if not date_str:
-        return ""
-    try:
-        parts = date_str.split(".")
-        if len(parts) != 3:
-            return date_str
-        roc_year = int(parts[0])
-        western_year = roc_year + 1911
-        return f"{western_year:04d}.{int(parts[1]):02d}.{int(parts[2]):02d}"
-    except Exception:
-        return date_str
-
-print("📅 抓取期間：", start_date, "~", end_date)
-print("目前使用查詢格式：", "民國" if USE_ROC else "西元")
-
-# -----------------------------
-# 分段時間產生器（10天為一批）
-# -----------------------------
-def period_windows(start_d: dt.date, end_d: dt.date, days=SEGMENT_DAYS):
-    cursor = start_d
-    while cursor <= end_d:
-        period_start = cursor
-        period_end = min(end_d, cursor + dt.timedelta(days=days - 1))
-        yield period_start, period_end
-        cursor = period_end + dt.timedelta(days=1)
-
-# -----------------------------
-# JSON 請求函式（含重試與延遲）
-# -----------------------------
-def get_json(url, params=None, max_retry=5, timeout=40):
-    for i in range(max_retry):
-        try:
-            r = session.get(url, params=params, timeout=timeout)
-            r.raise_for_status()
-            return r.json()
-        except Exception as e:
-            print(f"⚠️ 第 {i+1} 次連線失敗：{e}")
-            time.sleep(RETRY_DELAY_BASE * (i + 1))
-    print("❌ 超過最大重試次數，放棄此次請求。")
-    return []
-
-# -----------------------------
-# 資料欄位設定（與官方 JSON 一致）
-# -----------------------------
-OUTPUT_FIELDS = [
-    "交易日期", "種類代碼", "作物代號", "作物名稱",
-    "市場代號", "市場名稱", "上價", "中價", "下價",
-    "平均價", "交易量"
-]
-
-def normalize_record(rec: dict) -> dict:
-    def pick(*candidates):
-        for c in candidates:
-            if c in rec and rec[c] not in (None, ""):
-                return rec[c]
-        return ""
-    d = {
-        "交易日期": pick("TransDate", "交易日期"),
-        "種類代碼": pick("CategoryCode", "種類代碼"),
-        "作物代號": pick("CropCode", "作物代號"),
-        "作物名稱": pick("CropName", "作物名稱"),
-        "市場代號": pick("MarketCode", "市場代號"),
-        "市場名稱": pick("MarketName", "市場名稱"),
-        "上價": pick("UpperPrice", "上價"),
-        "中價": pick("MiddlePrice", "中價"),
-        "下價": pick("LowerPrice", "下價"),
-        "平均價": pick("AveragePrice", "平均價"),
-        "交易量": pick("TransVolume", "交易量")
+    params = {
+        "StartDate": f"{start.year - 1911:03d}.{start.month:02d}.{start.day:02d}",
+        "EndDate": f"{end.year - 1911:03d}.{end.month:02d}.{end.day:02d}",
+        "TcType": "N05",  # 水果
+        "$top": page_top,
+        "$skip": 0
     }
-    # ✅ 民國 → 西元轉換
-    d["交易日期"] = roc_to_western(d["交易日期"])
-    return d
-
-# -----------------------------
-# 單段抓取函式（只抓水果 N05）
-# -----------------------------
-def fetch_period_block(period_start: dt.date, period_end: dt.date, page_top=2000):
-    all_rows = []
-    skip = 0
-    print(f"🔍 抓取期間：{period_start} ~ {period_end} ({to_roc(period_start)} ~ {to_roc(period_end)})")
 
     while True:
-        params = {
-            "StartDate": to_roc(period_start, USE_ROC),
-            "EndDate": to_roc(period_end, USE_ROC),
-            "$top": page_top,
-            "$skip": skip,
-            "TcType": "N05"  # ✅ 直接篩選水果
-        }
-        data = get_json(FARM_TRANS_URL, params=params)
-        if not isinstance(data, list) or not data:
+        r = requests.get(url, params=params, timeout=30)
+        r.raise_for_status()
+        data = r.json()
+        if not data:
             break
 
-        matched = 0
-        for rec in data:
-            category_code = str(rec.get("CategoryCode", rec.get("種類代碼", ""))).strip()
-            if category_code == "N05":  # 保險起見再確認
-                all_rows.append(normalize_record(rec))
-                matched += 1
+        # 篩選出指定作物代號
+        filtered = [item for item in data if item.get("作物代號") in valid_codes]
+        all_data.extend(filtered)
 
-        print(f"✅ {period_start}~{period_end} 共 {len(data)} 筆，其中符合 {matched} 筆。")
         if len(data) < page_top:
             break
-        skip += page_top
 
-    return all_rows
+        params["$skip"] += page_top  # 下一頁
 
-# -----------------------------
-# 多執行緒處理 + 進度顯示
-# -----------------------------
-progress_lock = Lock()
-completed_tasks = 0
+    return all_data
 
-def process_period(p_start, p_end, total_tasks):
-    global completed_tasks
-    rows = fetch_period_block(p_start, p_end)
-    if rows:
-        with open(OUTPUT_CSV, "a", newline="", encoding="utf-8-sig") as f:
-            writer = csv.DictWriter(f, fieldnames=OUTPUT_FIELDS)
-            for r in rows:
-                writer.writerow(r)
-        print(f"[{p_start} ~ {p_end}] ✅ 寫入 {len(rows)} 筆")
-    else:
-        print(f"[{p_start} ~ {p_end}] ⚠️ 無資料")
 
-    # 更新進度
-    with progress_lock:
-        completed_tasks += 1
-        percent = completed_tasks / total_tasks * 100
-        print(f"📊 進度：{completed_tasks}/{total_tasks} ({percent:.1f}%)")
+# === 5️ 設定抓取期間 ===
+start_date = datetime(2020, 1, 1)
+end_date = datetime(2025, 10, 29)
 
-    return len(rows)
+# === 6️ 一天一天抓取 ===
+all_records = []
+cursor = start_date
 
-# -----------------------------
-# 主執行區塊
-# -----------------------------
-period_list = list(period_windows(start_date, end_date, days=SEGMENT_DAYS))
-total_tasks = len(period_list)
+while cursor <= end_date:
+    print(f"抓取日期：{cursor.date()}")
+    data = fetch_data(cursor, cursor)  # 每天抓一天
+    if data:
+        all_records.extend(data)
+    cursor += timedelta(days=1)
 
-# 寫入 CSV 標頭
-with open(OUTPUT_CSV, "w", newline="", encoding="utf-8-sig") as f:
-    writer = csv.DictWriter(f, fieldnames=OUTPUT_FIELDS)
-    writer.writeheader()
+print(f"\n 資料抓取完成，共 {len(all_records)} 筆")
 
-total_cnt = 0
-with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-    futures = {executor.submit(process_period, p_start, p_end, total_tasks): (p_start, p_end)
-               for p_start, p_end in period_list}
-    for future in as_completed(futures):
-        try:
-            total_cnt += future.result()
-        except Exception as e:
-            print(f"❌ 子執行緒錯誤：{e}")
+# === 7️ 建立 DataFrame ===
+df = pd.DataFrame(all_records)
 
-print(f"\n🎉 完成！總筆數：{total_cnt}，輸出檔：{OUTPUT_CSV}")
+# === 8️ 欄位轉英文 ===
+df = df.rename(columns={col: column_map.get(col, col) for col in df.columns})
+
+# === 9️ 民國 → 西元日期轉換 ===
+def roc_to_ad(date_str):
+    """將民國日期轉西元 (例：1090101 → 2020-01-01)"""
+    if pd.isna(date_str):
+        return None
+    date_str = str(date_str).replace(".", "").replace("/", "")
+    if len(date_str) != 7:
+        return None
+    try:
+        y = int(date_str[:3]) + 1911
+        m = int(date_str[3:5])
+        d = int(date_str[5:7])
+        return f"{y:04d}-{m:02d}-{d:02d}"
+    except:
+        return None
+
+if "TransDate" in df.columns:
+    df["TransDate"] = df["TransDate"].apply(roc_to_ad)
+    df["TransDate"] = pd.to_datetime(df["TransDate"], errors="coerce")
+
+# === 10 替換作物名稱 ===
+df["CropName"] = df["CropCode"].map(code_to_name)
+
+# === 11 輸出結果 ===
+output_file = "moa_N05_35fruit.csv"
+df.to_csv(output_file, index=False, encoding="utf-8-sig")
+
+print(f"\n🎉 全部完成！共 {len(df)} 筆資料（35 種水果）")
+print(f"💾 已輸出檔案：{output_file}")
