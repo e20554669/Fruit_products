@@ -1,0 +1,18 @@
+# 這是告訴 Docker 構建系統 (Buildkit) 在執行 COPY . . 時，
+# 應該忽略的檔案和資料夾，這是修復 Windows/WSL 環境下虛擬環境符號連結錯誤的關鍵步驟。
+
+# 忽略所有 Python 虛擬環境
+.venv/
+venv/
+env/
+
+# 忽略 Poetry 自己的內部緩存
+.poetry/
+
+# 忽略 Python 編譯和快取文件
+__pycache__/
+*.pyc
+
+# 忽略 VS Code 遠端快取 (Dev Containers 會自行處理)
+.vscode-server/
+.vscode

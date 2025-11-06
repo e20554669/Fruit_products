@@ -1,0 +1,2 @@
+# 將所有 shell 腳本強制設定為 LF 換行符
+*.sh text eol=lf
