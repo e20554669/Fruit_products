@@ -20,7 +20,7 @@ echo "1. 配置 Poetry: 確保虛擬環境建立在專案目錄 (.venv) 內..."
 # --- 2. 安裝或同步 Poetry 依賴 (使用絕對路徑) ---
 echo "2. 安裝或同步專案依賴 (根據 poetry.lock)..."
 if [ -f "poetry.lock" ]; then
-    "$POETRY_BIN" install --no-root --sync
+    "$POETRY_BIN" sync --no-root
 else
     echo "警告: 找不到 poetry.lock 檔案。正在嘗試根據 pyproject.toml 進行安裝。"
     "$POETRY_BIN" install --no-root

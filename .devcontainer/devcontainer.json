@@ -54,8 +54,8 @@
 
     // 容器創建後執行的指令 (使用 Array 語法，確保 Shell 執行穩定)
     "postCreateCommand": [
-        "sh", 
-        "./.devcontainer/postCreateCommand.sh"
+       "sh", 
+       "./.devcontainer/postCreateCommand.sh"
     ],
     
     
