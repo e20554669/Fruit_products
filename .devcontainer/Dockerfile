@@ -2,6 +2,8 @@ FROM python:3.12-slim-bullseye
 
 ENV TZ=Asia/Taipei
 
+ENV project_root = /app
+
 # --- 1. 安裝與配置 (單一高效 RUN 層) ---
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git zsh vim curl procps gcc python3-dev && \
@@ -32,7 +34,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR $project_root
 
 # --- 2. 複製 Poetry 依賴文件（不需安裝，留給 postCreateCommand.sh）---
 COPY pyproject.toml poetry.lock ./
