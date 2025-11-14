@@ -3,7 +3,7 @@ FROM python:3.12-slim-bullseye
 ENV TZ=Asia/Taipei
 
 # --- 指定專案根目錄為app
-ENV project_root = /app
+ENV project_root=/app
 
 # --- 指定 Airflow 的根目錄在專案資料夾內
 ENV AIRFLOW_HOME=/app/airflow
