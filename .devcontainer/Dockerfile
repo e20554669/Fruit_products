@@ -2,7 +2,11 @@ FROM python:3.12-slim-bullseye
 
 ENV TZ=Asia/Taipei
 
+# --- 指定專案根目錄為app
 ENV project_root = /app
+
+# --- 指定 Airflow 的根目錄在專案資料夾內
+ENV AIRFLOW_HOME=/app/airflow
 
 # --- 1. 安裝與配置 (單一高效 RUN 層) ---
 RUN apt-get update && \
@@ -38,6 +42,11 @@ WORKDIR $project_root
 
 # --- 2. 複製 Poetry 依賴文件（不需安裝，留給 postCreateCommand.sh）---
 COPY pyproject.toml poetry.lock ./
+
+# 設定虛擬環境在專案目錄下 (.venv)
+# 安裝依賴 (不包含專案本身，因為程式碼還沒複製進來)
+RUN /root/.local/bin/poetry config virtualenvs.in-project true && \
+    /root/.local/bin/poetry install --no-root --no-interaction --no-ansi
 
 # --- 3. 複製專案程式碼 ---
 COPY . .

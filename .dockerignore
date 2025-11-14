@@ -16,3 +16,6 @@ __pycache__/
 # 忽略 VS Code 遠端快取 (Dev Containers 會自行處理)
 .vscode-server/
 .vscode
+
+# 忽略 Airflow 執行時產生的資料 (Log 和 DB)
+airflow/

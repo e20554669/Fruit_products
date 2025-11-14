@@ -6,7 +6,8 @@
         "docker-compose.yml"
     ],
     "service": "app",
-    "workspaceFolder": "/app", 
+    "workspaceFolder": "/app",
+    "forwardPorts": [8080], 
 
     "customizations": {
         "vscode": {
@@ -38,26 +39,24 @@
                 "python.testing.pytestEnabled": true,
                 
                 // 告訴 Pylance 尋找 Poetry 建立的虛擬環境
-		"python.analysis.extraPaths": [
-		"${workspaceFolder}/.venv/lib/python3.12/site-packages"
-		]
+                "python.analysis.extraPaths": [
+                "${workspaceFolder}/.venv/lib/python3.12/site-packages"
+                ]
             }
         }
     },
     
-    // 將 SSH 和 Git config 掛載到容器
-    //"mounts": [
-    //    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh_mounted,type=bind,consistency=cached",
-    //    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.gitconfig,target=/root/.gitconfig_mounted,type=bind,consistency=cached"
-    //],
-
-
     // 容器創建後執行的指令 (使用 Array 語法，確保 Shell 執行穩定)
     "postCreateCommand": [
        "sh", 
        "./.devcontainer/postCreateCommand.sh"
     ],
     
-    
+    // 使用 -D (Daemon) 模式啟動，更穩定且自動管理背景執行
+    // "postStartCommand": "bash -c 'mkdir -p /app/airflow && cd /app && /root/.local/bin/poetry run airflow webserver -D && /root/.local/bin/poetry run airflow scheduler -D'",
+
+    // 使用 Daemon (-D) 模式啟動，並直接指定 DAG 資料夾
+    "postStartCommand": "bash -c 'export AIRFLOW__CORE__LOAD_EXAMPLES=False && export AIRFLOW__CORE__DAGS_FOLDER=/app/dags && mkdir -p /app/airflow && cd /app && /root/.local/bin/poetry run airflow webserver -D && /root/.local/bin/poetry run airflow scheduler -D'",
+
     "remoteUser": "root" 
 }
