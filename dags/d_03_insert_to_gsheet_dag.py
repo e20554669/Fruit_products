@@ -33,7 +33,7 @@ gsheets_url = (
 sheet_title = "weather"
 
 # 提供鑰匙存放路徑
-bigquery_credentials_file_path = "/app/work_area/code/bigquery-user.json"
+bigquery_credentials_file_path = "/app/keys/bigquery-user.json"
 
 
 # ===取得gsheet的函數

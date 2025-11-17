@@ -19,3 +19,6 @@ __pycache__/
 
 # 忽略 Airflow 執行時產生的資料 (Log 和 DB)
 airflow/
+
+# 忽略所有在 'keys' 資料夾底下的機密檔案
+keys/
