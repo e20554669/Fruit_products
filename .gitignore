@@ -205,3 +205,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Airflow Runtime Files (Logs, DB, and Configuration)
+airflow/
+airflow.cfg
+
+# 忽略所有在 'keys' 資料夾底下的機密檔案
+keys/
