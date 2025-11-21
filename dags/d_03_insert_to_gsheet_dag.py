@@ -21,8 +21,45 @@ db_config = {
     "charset": "utf8mb4",
 }
 
-# 設定資料庫查詢模板及URL設定
-sql_template = "SELECT * FROM weather " "WHERE `date` = CURDATE() - INTERVAL 1 DAY"
+# 設定資料庫查詢模板
+sql_template = """
+    WITH 
+    -- CTE1 處理水果價格: 將實際價格與預測價格合併
+    price AS(
+        SELECT * FROM price_prediction 
+        WHERE `date` <= CURDATE() AND `mode` = 'actual'
+        UNION ALL
+        SELECT * FROM price_prediction 
+        WHERE `date` > CURDATE() AND `mode` = 'prediction'
+    ),
+    -- CTE2 取得各作物每日成交量，並換算成公噸
+    volume_sum AS(
+        SELECT
+            `date`
+            ,crop_id
+            ,SUM(trans_volume)/1000 AS `trans_volume(t)`
+        FROM volume
+        GROUP BY `date`, crop_id
+    )
+    -- 主查詢: 加入水果名稱，並將欄位名稱轉換為中文
+    SELECT
+        cr.crop_name AS `水果名稱`
+        ,p.date AS `交易日期`
+        ,CASE 
+            WHEN p.mode = 'actual' THEN '實際價格'
+            WHEN p.mode = 'prediction' THEN '預測價格'
+        END AS `模式`
+        ,p.price AS `平均價(元/公斤)`
+        ,v.`trans_volume(t)` AS `交易量(公頓)`
+    FROM
+        price p
+        JOIN crop cr
+            ON p.crop_id = cr.crop_id
+        LEFT JOIN volume_sum v
+            ON p.crop_id = v.crop_id
+            AND p.date = v.date
+    ;
+"""
 
 # 設定google sheet的URL
 gsheets_url = (
@@ -30,10 +67,12 @@ gsheets_url = (
     "1uIWklrNfFHXt7lsMApmXNVP1VbjkcXQ0NcEPH9dj6G4/edit?usp=sharing"
 )
 # 設定要存取的分頁
-sheet_title = "weather"
+sheet_title = "price_prediction"
 
 # 提供鑰匙存放路徑
 bigquery_credentials_file_path = "/app/keys/bigquery-user.json"
+
+# ===================================設定資訊的結尾===================================
 
 
 # ===取得gsheet的函數
@@ -113,45 +152,16 @@ def export_data_to_gsheet():
             gc = get_google_sheet_client(bigquery_credentials_file_path)
             wks = get_gsheet(gc, gsheets_url, sheet_title)
 
-            # 3. 讀取現有資料 (為了比對日期)
-            current_data_df = wks.get_as_df(
-                has_header=True, include_tailing_empty=False, numerize=False
-            )
-
-            # --- 狀況 A: 空表 ---
-            if current_data_df.empty:
-                print("Google Sheet 為空，直接寫入資料...")
-                wks.set_dataframe(df, start="A1", copy_head=True, nan="")
-                print(f"寫入完成，共{df.shape[0]-1}筆資料")
-                return
-
-            # --- 狀況 B: 追加 ---
-            # 處理日期格式 (確保都是 date 物件)
-            gs_dates = pd.to_datetime(current_data_df["date"], format="mixed").dt.date
-            last_date_in_gs = gs_dates.max()
-
-            # MySQL 新資料 (取第一筆即可)
-            # 從 XCom 傳過來的 date 可能是字串，要轉 datetime
-            new_data_date = pd.to_datetime(df["date"].iloc[0]).date()
-
-            print(
-                f"檢查日期：GSheet 最新為 {last_date_in_gs}，準備寫入 {new_data_date}"
-            )
-
-            if new_data_date > last_date_in_gs:
-                print("檢測到新資料！正在追加到 Google Sheet...")
-                last_row = len(current_data_df) + 1  # 跳過標題
-                wks.set_dataframe(
-                    df, start=(last_row + 1, 1), copy_head=False, nan="", extend=True
-                )
-                print("更新完成！")
-            else:
-                print(
-                    f"資料已存在！({new_data_date} <= {last_date_in_gs})，跳過寫入以避免重複。"
-                )
+            # 3. 寫入資料至Google sheet
+            print("先將google sheet清空，確保資料正確性")
+            wks.clear()
+            print("開始寫入資料...")
+            wks.set_dataframe(df, start="A1", copy_head=True, nan="")
+            print(f"寫入完成，共{df.shape[0]-1}筆資料")
+            return
 
         except Exception as e:
-            print(f"日期比對或寫入失敗: {e}")
+            print(f"寫入失敗: {e}")
             raise
 
     records = query_data_from_sql(sql_template)

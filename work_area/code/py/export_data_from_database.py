@@ -57,11 +57,11 @@ def find_project_root(anchor_file=".gitignore"):
     )
 
 
-def restore_to_csv():
+def restore_to_csv(table_name: str):
     """將以pymysql取得的資料額外存成csv"""
 
     # 生成資料夾的名稱
-    output_dir = "weather_data"
+    output_dir = table_name
 
     try:
         # 執行 'find_project_root' (現在預設會尋找 .gitignore)
@@ -72,7 +72,7 @@ def restore_to_csv():
         project_root = Path.cwd()
     output_dir_path = Path(project_root, "work_area/data", output_dir)
     Path(output_dir_path).mkdir(parents=True, exist_ok=True)
-    output_dir_path = Path(output_dir_path, "weather_data_from_sql.csv")
+    output_dir_path = Path(output_dir_path, f"{table_name}_from_sql.csv")
     df.to_csv(output_dir_path, index=False, encoding="utf-8-sig")
     print(f"已將資料存在以下路徑: {output_dir_path}")
 
@@ -155,7 +155,11 @@ def upload_to_gsheet(df: pd.DataFrame, gsheets_url: str, sheet_title: str):
 
 
 # 設定資料庫查詢模板及URL設定
-sql_template = "SELECT * FROM weather " "WHERE `date` = CURDATE() - INTERVAL 1 DAY"
+sql_table_name = "price_prediction"
+sql_template = f"""
+    SELECT *
+    FROM {sql_table_name}
+"""
 
 # 設定google sheet的URL
 gsheets_url = (
@@ -182,4 +186,5 @@ connection = pymysql.connect(
 # 執行主程式
 if __name__ == "__main__":
     df = query_data_from_sql(sql_template, connection)  # 執行SQL query
-    upload_to_gsheet(df, gsheets_url, sheet_title)  # 上傳資料到google sheet
+    # upload_to_gsheet(df, gsheets_url, sheet_title)  # 上傳資料到google sheet
+    restore_to_csv(sql_table_name)  # 將結果存到csv
