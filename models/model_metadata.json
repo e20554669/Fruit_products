@@ -1,0 +1,9 @@
+{
+  "train_date": "2025-11-22T15:18:17.417605",
+  "model_type": "XGBoost Global Model",
+  "validation_mape": 21.174762271596187,
+  "test_mape": 27.066236822494215,
+  "n_crops": 34,
+  "n_features": 41,
+  "last_data_date": "2025-11-22T00:00:00"
+}
