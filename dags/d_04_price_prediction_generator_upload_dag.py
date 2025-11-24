@@ -26,7 +26,7 @@ defaults = {
     "max_train_days": 730,  # 訓練最多不超過 730 天
     "test_days": 90,  # 測試集天數（從 90 降到 30，更容易滿足）
     "validation_windows": 15,  # TimeSeriesSplit 的切法（從 15 降到 10）
-    "forecast_horizon": 7,  # 未來預測天數
+    "forecast_horizon": 8,  # 未來預測天數
     "min_data_points": 60,  # 最小資料點數（測試集 30 + 訓練集至少 30）
 }
 

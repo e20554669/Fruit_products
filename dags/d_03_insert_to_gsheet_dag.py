@@ -118,15 +118,13 @@ city_dict = {
 
 
 # 設定google sheet的URL
-gsheets_url = (
-    "https://docs.google.com/spreadsheets/d/"
-    "1uIWklrNfFHXt7lsMApmXNVP1VbjkcXQ0NcEPH9dj6G4/edit?usp=sharing"
-)
+gsheets_url = "https://docs.google.com/spreadsheets/d/1W_OelHOCt5EqatWQtzggBAi0VeYCInyiak_lDW-E57Q/edit?usp=sharing"
+
 # 設定要存取的分頁
 
 sheet_title_dict = {}  # 先建立一個dict來存放sheet對照表
-sheet_title_dict["sheet_title1"] = "price_prediction"
-sheet_title_dict["sheet_title2"] = "weather"
+sheet_title_dict["sheet_title1"] = "Price"
+sheet_title_dict["sheet_title2"] = "Weather"
 
 # 提供鑰匙存放路徑
 bigquery_credentials_file_path = "/app/keys/bigquery-user.json"
