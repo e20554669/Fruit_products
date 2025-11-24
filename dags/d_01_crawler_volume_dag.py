@@ -13,9 +13,8 @@ DB_CONFIG = {
     "user": "tjr103-team02",
     "password": "password",
     "database": "tjr103-team02",
-    "charset": "utf8mb4"
+    "charset": "utf8mb4",
 }
-
 
 
 # API URL
@@ -32,25 +31,67 @@ column_name = {
     "下價": "LowerPrice",
     "平均價": "AveragePrice",
     "交易量": "TransVolume",
-    "種類代碼": "TypeCode"
+    "種類代碼": "TypeCode",
 }
 
 # 35 種水果「只保留代碼」
 FRUIT_CODES = {
-    "72","I1","51","T1","N3","R1","L1","H1","H2","Z4","W1","A1",
-    "Y1","45","J1","D1","41","O10","V1","E1","22","C1","P1","11",
-    "M3","C5","S1","H4","B2","Q1","G7","K3","F1","X69","31"
+    "72",
+    "I1",
+    "51",
+    "T1",
+    "N3",
+    "R1",
+    "L1",
+    "H1",
+    "H2",
+    "Z4",
+    "W1",
+    "A1",
+    "Y1",
+    "45",
+    "J1",
+    "D1",
+    "41",
+    "O10",
+    "V1",
+    "E1",
+    "22",
+    "C1",
+    "P1",
+    "11",
+    "M3",
+    "C5",
+    "S1",
+    "H4",
+    "B2",
+    "Q1",
+    "G7",
+    "K3",
+    "F1",
+    "X69",
+    "31",
 }
 
 # 市場 → 城市 ID
 MARKET_TO_CITY_ID = {
-    "台北一": "TPE", "台北二": "TPE",
-    "板橋區": "NTP", "三重區": "NTP",
-    "桃農": "TYN", "宜蘭市": "ILA",
-    "台中市": "TXG", "豐原區": "TXG", "東勢鎮": "TXG",
-    "嘉義市": "CYI", "高雄市": "KHH", "鳳山區": "KHH",
-    "台東市": "TTT", "南投市": "NTO", "屏東市": "PIF"
+    "台北一": "TPE",
+    "台北二": "TPE",
+    "板橋區": "NTP",
+    "三重區": "NTP",
+    "桃農": "TYN",
+    "宜蘭市": "ILA",
+    "台中市": "TXG",
+    "豐原區": "TXG",
+    "東勢鎮": "TXG",
+    "嘉義市": "CYI",
+    "高雄市": "KHH",
+    "鳳山區": "KHH",
+    "台東市": "TTT",
+    "南投市": "NTO",
+    "屏東市": "PIF",
 }
+
 
 # 民國 → 西元
 def roc_to_ad(date_str):
@@ -64,6 +105,7 @@ def roc_to_ad(date_str):
     d = int(date_str[5:7])
     return f"{y:04d}-{m:02d}-{d:02d}"
 
+
 # API 抓取資料（使用作物代碼 set 過濾）
 def fetch_data(start, end, page_top=2000):
     all_data = []
@@ -72,7 +114,7 @@ def fetch_data(start, end, page_top=2000):
         "EndDate": f"{end.year - 1911:03d}.{end.month:02d}.{end.day:02d}",
         "TcType": "N05",
         "$top": page_top,
-        "$skip": 0
+        "$skip": 0,
     }
 
     while True:
@@ -92,6 +134,7 @@ def fetch_data(start, end, page_top=2000):
 
     return all_data
 
+
 # MySQL 找最大日期
 def get_last_date():
     conn = pymysql.connect(**DB_CONFIG)
@@ -102,8 +145,11 @@ def get_last_date():
     conn.close()
     return result
 
+
 # 匯入 MySQL（不用 for，直接一次 executemany）
 TABLE_NAME = "volume"
+
+
 def insert_to_mysql(df):
     conn = pymysql.connect(**DB_CONFIG)
     cursor = conn.cursor()
@@ -120,7 +166,7 @@ def insert_to_mysql(df):
             row["city_id"],
             str(row["crop_id"]),
             float(row["avg_price"]),
-            float(row["trans_volume"])
+            float(row["trans_volume"]),
         )
         for _, row in df.iterrows()
     ]
@@ -134,12 +180,13 @@ def insert_to_mysql(df):
     conn.close()
     print("匯入完成！")
 
+
 # Airflow DAG
 with DAG(
     dag_id="d_01_crawler_volume_dag",
     description="每日抓取台灣水果行情（API）",
     start_date=pendulum.datetime(2020, 1, 1, tz="Asia/Taipei"),
-    schedule="00 6 * * *",
+    schedule="00 5 * * *",
     catchup=False,
     tags=["fruit", "moa", "mysql"],
     is_paused_upon_creation=False,
@@ -189,18 +236,19 @@ with DAG(
         df["TransDate"] = pd.to_datetime(df["TransDate"], errors="coerce")
         df["city_id"] = df["MarketName"].map(MARKET_TO_CITY_ID)
 
-        grouped = df.groupby(["TransDate", "CropCode", "city_id"], as_index=False).agg({
-            "AveragePrice": "mean",
-            "TransVolume": "sum"
-        })
+        grouped = df.groupby(["TransDate", "CropCode", "city_id"], as_index=False).agg(
+            {"AveragePrice": "mean", "TransVolume": "sum"}
+        )
 
         grouped["AveragePrice"] = grouped["AveragePrice"].round(2)
-        grouped = grouped.rename(columns={
-            "TransDate": "date",
-            "CropCode": "crop_id",
-            "AveragePrice": "avg_price",
-            "TransVolume": "trans_volume"
-        })
+        grouped = grouped.rename(
+            columns={
+                "TransDate": "date",
+                "CropCode": "crop_id",
+                "AveragePrice": "avg_price",
+                "TransVolume": "trans_volume",
+            }
+        )
 
         grouped["date"] = grouped["date"].astype(str)
         return grouped.to_dict(orient="records")
