@@ -32,10 +32,10 @@ sql_template_dict[
     -- CTE1 處理水果價格: 將實際價格與預測價格合併
     price AS(
         SELECT * FROM price_prediction 
-        WHERE `date` <= CURDATE() AND `mode` = 'actual'
+        WHERE `date` < CURDATE() AND `mode` = 'actual'
         UNION ALL
         SELECT * FROM price_prediction 
-        WHERE `date` > CURDATE() AND `mode` = 'prediction'
+        WHERE `date` >= CURDATE() AND `mode` = 'prediction'
     ),
     -- CTE2 取得各作物每日成交量，並換算成公噸
     volume_sum AS(
