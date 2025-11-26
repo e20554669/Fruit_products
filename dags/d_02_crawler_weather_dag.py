@@ -14,6 +14,7 @@ import pymysql
 # Airflow 專用模組
 import pendulum
 from airflow.decorators import dag, task
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 # 建立測站資料對照表
 stations = [
@@ -924,7 +925,7 @@ def camel_to_snake(name):
 @dag(
     dag_id="d_02_crawler_weather_dag",
     description="每日抓取台灣各縣市天氣資料",
-    schedule="0 6 * * *",
+    schedule=None,
     start_date=pendulum.datetime(2020, 1, 1, tz="Asia/Taipei"),
     catchup=False,
     tags=["weather", "etl", "mysql", "pymysql"],
@@ -1093,9 +1094,15 @@ def weather_etl_dag_pymysql():
             if conn:
                 conn.close()
 
+    trigger_next_dag = TriggerDagRunOperator(
+        task_id="trigger_dag_03",
+        trigger_dag_id="d_03_price_prediction_generator_upload_dag",
+        wait_for_completion=False,  # 不等確認下一個dag執行就結束任務
+    )
+
     # 設定相依性
     raw_data = extract_weather_data()
     clean_data = transform_weather_data(raw_data)
-    load_weather_data(clean_data)
+    load_weather_data(clean_data) >> trigger_next_dag
 
 weather_etl_dag_pymysql()

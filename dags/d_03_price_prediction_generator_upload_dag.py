@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 # 載入airflow所需套件
 import pendulum
 from airflow.decorators import dag, task
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 # ===設定MySQL資訊、模型檔案存放位置
 
@@ -432,9 +433,9 @@ def load_model_artifacts():
 
 #  開始處理 Airflow DAG
 @dag(
-    dag_id="d_04_price_prediction_generator_upload_dag",
+    dag_id="d_03_price_prediction_generator_upload_dag",
     description="每日從MySQL執行view取出歷史價格，並透過模型預測資料後回傳至MySQL",
-    schedule="30 6 * * *",
+    schedule=None,
     start_date=pendulum.datetime(2020, 1, 1, tz="Asia/Taipei"),
     catchup=False,
     tags=["view", "etl", "mysql", "pymysql", "price", "prediction", "ML"],
@@ -567,10 +568,16 @@ def price_prediction_generator_etl_dag_pymysql():
             cursor.close()
             conn.close()
 
+    trigger_next_dag = TriggerDagRunOperator(
+        task_id="trigger_dag_04",
+        trigger_dag_id="d_04_insert_to_gsheet_dag",
+        wait_for_completion=False,  # 不等確認下一個dag執行就結束任務
+    )
+
     # 設定相依性
     raw_data = extract_price_data()
     clean_data = transform_price_data(raw_data)
-    load_price_data(clean_data)
+    load_price_data(clean_data) >> trigger_next_dag
 
 
 price_prediction_generator_etl_dag_pymysql()

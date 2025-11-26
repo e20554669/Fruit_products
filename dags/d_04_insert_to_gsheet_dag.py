@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 # 載入airflow所需套件
 import pendulum
 from airflow.decorators import dag, task
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 # ===設定MySQL資訊、gsheet_URL、gsheet_title、key存放位置
 
@@ -148,9 +149,9 @@ def get_gsheet(client, gsheet_url: str, worksheet_title: str | None = None):
 
 #  開始處理 Airflow DAG
 @dag(
-    dag_id="d_03_insert_to_gsheet_dag",
+    dag_id="d_04_insert_to_gsheet_dag",
     description="每日從 MySQL 匯出需求資料到 Google Sheets (給Tableau用)",
-    schedule="0 7 * * *",
+    schedule=None,
     start_date=pendulum.datetime(2023, 1, 1, tz="Asia/Taipei"),
     catchup=False,
     tags=["weather", "volume", "area_production", "gsheet", "tableau"],

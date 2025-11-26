@@ -5,6 +5,7 @@ import pymysql
 from airflow import DAG
 from airflow.decorators import task
 import pendulum
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 # MySQL 連線設定
 DB_CONFIG = {
@@ -202,7 +203,7 @@ with DAG(
             start_date = datetime(2020, 1, 1).date()
             print("第一次執行，從 2020-01-01 開始")
 
-        end_date = datetime.today().date()
+        end_date = datetime.today().date() - timedelta(days=1)
 
         if start_date > end_date:
             print("資料已最新，不需更新")
@@ -261,6 +262,13 @@ with DAG(
         df = pd.DataFrame(records)
         insert_to_mysql(df)
 
+    trigger_next_dag = TriggerDagRunOperator(
+        task_id="trigger_dag_02",
+        trigger_dag_id="d_02_crawler_weather_dag",
+        wait_for_completion=False,  # 不等確認下一個dag執行就結束任務
+        dag=dag
+    )
+
     dr = prepare_date_range()
     data = fetch_and_transform(dr)
-    insert_data(data)
+    insert_data(data) >> trigger_next_dag
