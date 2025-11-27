@@ -186,5 +186,5 @@ connection = pymysql.connect(
 # 執行主程式
 if __name__ == "__main__":
     df = query_data_from_sql(sql_template, connection)  # 執行SQL query
-    # upload_to_gsheet(df, gsheets_url, sheet_title)  # 上傳資料到google sheet
-    restore_to_csv(sql_table_name)  # 將結果存到csv
+    upload_to_gsheet(df, gsheets_url, sheet_title)  # 上傳資料到google sheet
+    # restore_to_csv(sql_table_name)  # 將結果存到csv

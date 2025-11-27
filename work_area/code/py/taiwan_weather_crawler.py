@@ -15,8 +15,6 @@ from pathlib import Path
 warnings.filterwarnings("ignore", category=InsecureRequestWarning)
 
 # 設定抓取日期
-# st = datetime(2023, 1, 1)
-# et = datetime(2023, 1, 6)
 st = datetime.today().date() - timedelta(days=1)
 et = datetime.today().date() - timedelta(days=1)
 # 生成資料夾的名稱
@@ -71,7 +69,7 @@ weather_factor = [
     "typhoon_name",
 ]
 
-# %%
+
 # 建立測站資料對照表
 stations = [
     # 彰化縣
@@ -722,7 +720,7 @@ stations = [
     },
 ]
 
-# %%
+
 # 颱風警報處理
 
 
@@ -827,7 +825,7 @@ class TyphoonWarningFetcher:
         return date_warnings
 
 
-# %%
+
 # 建立爬蟲程式的物件
 
 
@@ -1006,7 +1004,7 @@ class CODiSAPICrawler:
             return None
 
 
-# %%
+
 # 資料處理函數
 
 
@@ -1139,7 +1137,7 @@ def create_daily_summary(hourly_df):
     return daily_df
 
 
-# %%
+
 # 欄位名稱處理函數
 
 
@@ -1154,7 +1152,7 @@ def camel_to_snake(name):
     return s2.lower()
 
 
-# %%
+
 # 主程式
 def main():
     print("=" * 70)
