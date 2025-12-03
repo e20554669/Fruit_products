@@ -7,11 +7,11 @@
 
 ## 專案目標
 
-- 整合異質資料（水果 × 天氣 × 面積 × 產量）  
+- 整合異質資料（價格 × 天氣 × 面積 × 產量）  
 - 建立自動化 ETL 資料處理流程（Airflow）  
 - 建置 MySQL 雲端資料庫（GCP）  
 - 發展可解釋的天氣加權因子  
-- 建立 7 天水果價格預測模型  
+- 建立未來 7 天水果價格預測模型  
 - 視覺化展示（Tableau Dashboard）  
 
 ---
@@ -77,13 +77,13 @@ Tableau Dashboard (Visualization)
 ---
 
 ## 資料欄位標準化
-資料來自多種來源（水果、天氣、種植面積與產量），欄位格式不一致：  
+資料來自多種來源（價格、天氣、種植面積與產量），欄位格式不一致：  
 - 有作物名稱、品項名稱、品種名稱混雜  
 - 氣象資料皆有不同欄位命名方式  
 
 本專案建立：  
 - **名稱對照表（mapping）**  
-- **欄位統一格式 snake_case**  
+- **欄位統一格式 (snake_case)**  
 
 以確保所有資料能成功整合。
 
@@ -104,7 +104,7 @@ weather
 area_production
 crop
 city
-prediction_view
+price_prediction
 ```
 
 ---
@@ -123,6 +123,7 @@ prediction_view
 ## Tableau 視覺化儀表板
 
 ```
+Tableau Dashboard連結: https://public.tableau.com/app/profile/lin.chu5169/viz/1126_test_17645702366860/sheet4
 ● 水果價格趨勢
 ● 面積/產量分布
 ● 互動式地圖
@@ -135,7 +136,7 @@ prediction_view
 ## 成果總結
 
 ```
-● 成功整合多表資料（水果 × 天氣 × 面積 × 產量）
+● 成功整合多表資料（價格 × 天氣 × 面積 × 產量）
 ● 建立自動化 ETL Pipeline
 ● 完成雲端部署與 CI/CD
 ● 建置準確度 85% 的價格預測模型
@@ -150,6 +151,7 @@ prediction_view
 ● 陳奕丞 Y.Chen: dnalib@gmail.com  
 ● 林映竹 Steven: linhoungli40@gmail.com  
 ● 吳承勳 Patrick: patrickeino1610@gmail.com  
+
 
 
 
