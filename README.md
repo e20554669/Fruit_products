@@ -145,5 +145,24 @@ prediction_view
 ---
 
 ## 聯絡方式
-如需面試 Demo，歡迎聯繫我！
+● 陳致瑋 Matt: e20554669@gmail.com  
+● 石智承 Anthony: kook655135@gmail.com  
+● 陳奕丞 Y.Chen: dnalib@gmail.com  
+● 林映竹 Steven: linhoungli40@gmail.com  
+● 吳承勳 Patrick: patrickeino1610@gmail.com  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
